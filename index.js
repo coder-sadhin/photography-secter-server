@@ -19,6 +19,7 @@ const run = async () => {
         const serviceCollection = client.db('photography_database_collection').collection('services');
         const blogsCollection = client.db('photography_database_collection').collection('blogs');
         const reviewCollection = client.db('photography_database_collection').collection('review-collection');
+        const productCollection = client.db('photography_database_collection').collection('productCollection');
 
         app.get('/services', async (req, res) => {
             const query = {};
@@ -101,6 +102,17 @@ const run = async () => {
             res.send(result);
             // console.log(massage);
         })
+
+
+        app.get('/product', async (req, res) => {
+            const query = {};
+            const cursor = productCollection.find(query);
+            const products = await cursor.toArray();
+            res.send(products);
+        })
+
+
+
 
     }
     finally {
