@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
+require('dotenv').config()
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
@@ -9,15 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 
-
-/// user :photography_user
-/// password: 7xzReybfRLfc9kvz
-/// photography_database_collection
-
-
-
-
-const uri = "mongodb+srv://photography_user:7xzReybfRLfc9kvz@cluster0.bbbtstv.mongodb.net/?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.MONGO_DB_USER}:${process.env.MONGO_DB_PASS}@cluster0.bbbtstv.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
@@ -62,13 +55,13 @@ const run = async () => {
             res.send(service);
         })
 
-        app.get('/review/:id', async (req, res) => {
+        app.get('/service/review/:id', async (req, res) => {
             const id = req.params.id;
             const query = { service_id: id };
             const cursor = reviewCollection.find(query);
             const reviews = await cursor.toArray();
             res.send(reviews);
-            console.log(reviews)
+            // console.log(reviews)
         })
 
         app.post('/addReview', async (req, res) => {
@@ -86,19 +79,28 @@ const run = async () => {
             res.send(reviews);
         })
 
-        // app.patch('/myReview/update:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     const massage = req.body.massage;
-        //     // const query = { _id: ObjectId(id) }
-        //     // const updatedDoc = {
-        //     //     $set: {
-        //     //         status: status
-        //     //     }
-        //     // }
-        //     // const result = await ordersCollection.updateOne(query, updatedDoc);
-        //     // res.send(result);
-        //     console.log(massage, id);
-        // })
+        app.get('/review/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await reviewCollection.findOne(query);
+            res.send(result);
+            // console.log(id)
+        })
+
+
+        app.patch('/update/:id', async (req, res) => {
+            const id = req.params.id;
+            const massage = req.body.massage;
+            const query = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    massage: massage
+                }
+            }
+            const result = await reviewCollection.updateOne(query, updatedDoc);
+            res.send(result);
+            // console.log(massage);
+        })
 
     }
     finally {
@@ -110,7 +112,7 @@ run().catch(err => console.error(err));
 
 
 app.get('/', (req, res) => {
-    res.send('server is running')
+    res.json('server is running')
 })
 
 app.listen(port, () => {
