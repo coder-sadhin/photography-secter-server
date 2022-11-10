@@ -14,13 +14,15 @@ app.use(express.json());
 
 function JwtTokenVerify(req, res, next) {
     const authHeaders = req.headers.authorization;
+    // console.log(authHeaders)
     if (!authHeaders) {
-        res.status(401).send({ message: 'unauthorize access' })
+        return res.status(401).send({ message: 'unauthorize access' })
     }
     const token = authHeaders.split(' ')[1];
+    // console.log(token)
     jwt.verify(token, process.env.JWT_TOKEN_SECRET_CODE, function (err, decoded) {
         if (err) {
-            res.status(401).send({ message: 'unauthorize access' })
+            return res.status(401).send({ message: 'unauthorize access' })
         }
         req.decoded = decoded;
         next()
@@ -82,7 +84,7 @@ const run = async () => {
         app.get('/service/review/:id', async (req, res) => {
             const id = req.params.id;
             const query = { service_id: id };
-            const cursor = reviewCollection.find(query);
+            const cursor = reviewCollection.find(query, { sort: { date: -1 } });
             const reviews = await cursor.toArray();
             res.send(reviews);
             // console.log(reviews)
@@ -97,9 +99,21 @@ const run = async () => {
         })
 
         // review api 
-        app.get('/myReview', async (req, res) => {
-            const email = req.query.email;
-            const query = { email: email };
+        app.get('/myReview', JwtTokenVerify, async (req, res) => {
+
+            const decoded = req.decoded;
+            console.log(decoded)
+            if (decoded.email !== req.query.email) {
+                res.status(403).send({ message: 'access denied' })
+            }
+
+            let query = {};
+            if (req.query.email) {
+                query = {
+                    email: req.query.email
+                }
+            }
+
             const cursor = reviewCollection.find(query);
             const reviews = await cursor.toArray();
             res.send(reviews);
@@ -155,8 +169,6 @@ const run = async () => {
             res.send({ token })
             // console.log(user)
         })
-
-
 
     }
     finally {
